@@ -1,3 +1,7 @@
 .delete {
     color: red;
 }
+
+.alert {
+    transition: all .3s;
+}
