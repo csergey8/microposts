@@ -1,31 +1,80 @@
-import { http } from './http';
-import { ui } from './ui';
+import {
+    http
+} from './http';
+import {
+    ui
+} from './ui';
 
 // Get post on DOMload
 document.addEventListener('DOMContentLoaded', getPost);
 
 document.querySelector('.post-submit').addEventListener('click', submitPost);
 
+document.querySelector('#posts').addEventListener('click', enableEdit);
+
+document.querySelector('.card-form').addEventListener('click',  cancelEdit);
+
 function getPost() {
     http.get('http://localhost:3000/posts')
-        .then(data => ui.showPost(data)) 
+        .then(data => ui.showPost(data))
         .catch(err => console.log(err));
 }
 
 function submitPost() {
     const title = document.querySelector('#title').value;
     const body = document.querySelector('#body').value;
-    
+    const id = document.querySelector('#id').value;
+
     const data = {
         title,
         body
     }
-    
-    http.post('http://localhost:3000/posts', data)
-        .then(data => {
-            ui.showAlert('Post added', 'alert alert-success');
-            ui.clearFields()
-            getPost();
-        })
-        .catch(err => console.log(err));
+
+    if (title === '' || body === '') {
+        ui.showAlert('Please fill all fields', 'alert alert-danger');
+    } else {
+        if(id === '') {
+            http.post('http://localhost:3000/posts', data)
+            .then(data => {
+                ui.showAlert('Post added', 'alert alert-success');
+                ui.clearFields();
+                getPost();
+            })
+            .catch(err => console.log(err));
+        } else {
+            http.put(`http://localhost:3000/posts/${id}`, data)
+            .then(data => {
+                ui.showAlert('Post updated', 'alert alert-success');
+                ui.changeFormState('add');
+                getPost();
+            })
+            .catch(err => console.log(err));
+        }
+       
+    }
+
+}
+
+function enableEdit(e) {
+    e.preventDefault();
+    if (e.target.parentElement.classList.contains('edit')) {
+        const id = e.target.parentElement.dataset.id;
+        const body = e.target.parentElement.previousElementSibling.textContent;
+        const title = e.target.parentElement.previousElementSibling.previousElementSibling.textContent;
+
+        const data = {
+            id,
+            title,
+            body
+        }
+
+        ui.fillForm(data);
+    }
+}
+
+function cancelEdit(e) {
+    e.preventDefault();
+    if(e.target.classList.contains('post-cancel')) {
+        ui.changeFormState('add');
+    }
 }
